@@ -26,8 +26,7 @@
       .dartboard .segment { stroke:#141414; stroke-width:1.35; }
       .dartboard .wire { fill:none; stroke:#b6b1a7; stroke-opacity:.68; stroke-width:.8; pointer-events:none; }
       .dartboard text { fill:#fff; font-family:Arial,sans-serif; font-size:14px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:#111; stroke-width:2px; }
-      .dartboard .hit-marker-halo { fill:#fff; pointer-events:none; }
-      .dartboard .hit-marker { fill:#ef2028; stroke:#111; stroke-width:1px; pointer-events:none; }
+      .dartboard .hit-marker { fill:none; stroke:#ff3b30; stroke-width:2.4px; stroke-linecap:round; pointer-events:none; }
       .guide { margin:13px 0 0; color:var(--muted); font-size:12px; line-height:1.5; text-align:center; }
       .score-panel { border-top:2px solid #fff; padding-top:16px; }
       .score-meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; font-weight:800; letter-spacing:.08em; }
@@ -41,6 +40,8 @@
       .utility button { min-height:44px; border:1px solid var(--line); border-right:0; border-radius:0; background:var(--panel); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; }
       .utility button:last-child { border-right:1px solid var(--line); }
       .utility button:disabled { color:#555; cursor:not-allowed; }
+      .restart { display:none; width:100%; min-height:54px; margin-top:8px; border:1px solid #fff; border-radius:0; background:#fff; color:#000; font-size:15px; font-weight:850; cursor:pointer; }
+      .restart.visible { display:block; }
       .history { margin-top:29px; }
       .history-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
       h2 { margin:0; font-size:14px; letter-spacing:-.03em; }
@@ -84,6 +85,7 @@
             <div class="last"><span class="last-label">최근 기록</span><span id="last-hit">—</span></div>
             <button class="miss" id="miss" type="button">미스 기록 · 0점</button>
             <div class="utility"><button id="undo" type="button" disabled>이전</button><button id="reset" type="button">초기화</button></div>
+            <button class="restart" id="restart" type="button">다시 시작</button>
           </section>
           <section class="history"><div class="history-head"><h2>6회 기록</h2><span id="throws">0 / 6</span></div><ol id="history-list"></ol></section>
         </aside>
@@ -149,8 +151,8 @@
             const layer = element('g',{class:'hit-marker-layer'});
             hits.forEach(hit => {
               if (!hit.point) return;
-              layer.append(element('circle',{cx:hit.point.x,cy:hit.point.y,r:8,class:'hit-marker-halo'}));
-              layer.append(element('circle',{cx:hit.point.x,cy:hit.point.y,r:5.5,class:'hit-marker'}));
+              const size = 3.5, x = hit.point.x, y = hit.point.y;
+              layer.append(element('path',{d:`M ${x-size} ${y-size} L ${x+size} ${y+size} M ${x+size} ${y-size} L ${x-size} ${y+size}`,class:'hit-marker'}));
             });
             svg.append(layer);
           });
@@ -165,7 +167,7 @@
           $('#undo').disabled=!hits.length;
           $('#miss').disabled=complete;
           $('#board-wrap').classList.toggle('locked',complete);
-          $('#reset').textContent=complete ? '다시 시작' : '초기화';
+          $('#restart').classList.toggle('visible',complete);
           $('#history-list').innerHTML=Array.from({length:MAX_THROWS},(_,index) => {
             const hit=hits[index];
             return `<li class="throw-row ${hit?'used':''}"><span class="throw-no">${index+1}</span><span class="throw-name ${hit?'':'empty-value'}">${hit ? hit.name : '—'}</span><span class="throw-score">${hit ? hit.score+'점' : '—'}</span></li>`;
@@ -178,6 +180,7 @@
         $('#miss').addEventListener('click',()=>record({score:0,name:'미스',short:'MISS'}));
         $('#undo').addEventListener('click',()=>{ if(hits.length){ hits.pop(); render(); } });
         $('#reset').addEventListener('click',()=>{ hits=[]; render(); });
+        $('#restart').addEventListener('click',()=>{ hits=[]; render(); });
 
         const modal=$('#precision-modal'), precisionBoard=$('#precision-board'), stage=$('#precision-stage');
         function applyView() { const size=300/view.zoom; precisionBoard.setAttribute('viewBox',`${view.cx-size/2} ${view.cy-size/2} ${size} ${size}`); $('#zoom-level').textContent=`${Math.round(view.zoom*100)}%`; }
