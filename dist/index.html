@@ -26,8 +26,8 @@
       .dartboard .segment { stroke:#141414; stroke-width:1.35; }
       .dartboard .wire { fill:none; stroke:#b6b1a7; stroke-opacity:.68; stroke-width:.8; pointer-events:none; }
       .dartboard text { fill:#fff; font-family:Arial,sans-serif; font-size:14px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:#111; stroke-width:2px; }
-      .dartboard .hit-marker-outline { fill:none; stroke:#fff; stroke-width:4.8px; stroke-linecap:butt; pointer-events:none; }
-      .dartboard .hit-marker { fill:none; stroke:#e3282f; stroke-width:2.4px; stroke-linecap:butt; pointer-events:none; }
+      .dartboard .hit-marker-shadow { fill:none; stroke:rgba(0,0,0,.78); stroke-width:5.8px; stroke-linecap:butt; pointer-events:none; }
+      .dartboard .hit-marker { fill:none; stroke:#fff; stroke-width:3.8px; stroke-linecap:butt; pointer-events:none; }
       .guide { margin:13px 0 0; color:var(--muted); font-size:12px; line-height:1.5; text-align:center; }
       .score-panel { border-top:2px solid #fff; padding-top:16px; }
       .score-meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; font-weight:800; letter-spacing:.08em; }
@@ -152,9 +152,9 @@
             const layer = element('g',{class:'hit-marker-layer'});
             hits.forEach(hit => {
               if (!hit.point) return;
-              const size = 4.5, x = hit.point.x, y = hit.point.y;
-              const mark = `M ${x-size} ${y-size} L ${x+size} ${y+size} M ${x+size} ${y-size} L ${x-size} ${y+size}`;
-              layer.append(element('path',{d:mark,class:'hit-marker-outline'}));
+              const outer = 8, inner = 2.5, x = hit.point.x, y = hit.point.y;
+              const mark = `M ${x-outer} ${y-outer} L ${x-inner} ${y-inner} M ${x+outer} ${y+outer} L ${x+inner} ${y+inner} M ${x+outer} ${y-outer} L ${x+inner} ${y-inner} M ${x-outer} ${y+outer} L ${x-inner} ${y+inner}`;
+              layer.append(element('path',{d:mark,class:'hit-marker-shadow'}));
               layer.append(element('path',{d:mark,class:'hit-marker'}));
             });
             svg.append(layer);
