@@ -21,12 +21,13 @@
       .board-head { display:flex; align-items:center; justify-content:space-between; margin:0 1px 13px; }
       .board-head p { margin:0; color:var(--muted); font-size:13px; }
       .text-button { appearance:none; border:0; padding:0; background:transparent; color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:4px; }
-      .board-wrap { position:relative; width:min(100%,620px); margin:0 auto; aspect-ratio:1; overflow:hidden; border-radius:50%; background:#050505; touch-action:manipulation; }
+      .board-wrap { position:relative; width:min(100%,620px); margin:0 auto; aspect-ratio:1; background:transparent; touch-action:manipulation; }
       .dartboard { display:block; width:100%; height:100%; user-select:none; }
       .dartboard .segment { stroke:#141414; stroke-width:1.35; }
       .dartboard .wire { fill:none; stroke:#b6b1a7; stroke-opacity:.68; stroke-width:.8; pointer-events:none; }
       .dartboard text { fill:#fff; font-family:Arial,sans-serif; font-size:14px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:#111; stroke-width:2px; }
-      .dartboard .hit-marker { fill:#ef2028; stroke:#fff; stroke-width:1.4px; pointer-events:none; }
+      .dartboard .hit-marker-halo { fill:#fff; pointer-events:none; }
+      .dartboard .hit-marker { fill:#ef2028; stroke:#111; stroke-width:1px; pointer-events:none; }
       .guide { margin:13px 0 0; color:var(--muted); font-size:12px; line-height:1.5; text-align:center; }
       .score-panel { border-top:2px solid #fff; padding-top:16px; }
       .score-meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; font-weight:800; letter-spacing:.08em; }
@@ -122,7 +123,7 @@
             ring(radii.doubleIn,radii.doubleOut,index % 2 ? '#159782' : '#d83b45');
             ring(radii.tripleIn,radii.tripleOut,index % 2 ? '#159782' : '#d83b45');
             ring(radii.outerBull,radii.tripleIn,light ? '#ece8df' : '#252525');
-            const [x,y] = polar(141,(start+end)/2), text = element('text',{x,y}); text.textContent=number; svg.append(text);
+            const [x,y] = polar(143,(start+end)/2), text = element('text',{x,y}); text.textContent=number; svg.append(text);
           });
           [radii.doubleOut,radii.doubleIn,radii.tripleOut,radii.tripleIn,radii.outerBull].forEach(radius => svg.append(element('circle',{cx:center,cy:center,r:radius,class:'wire'})));
           svg.append(element('circle',{cx:center,cy:center,r:radii.outerBull,fill:'#159782',class:'segment'}));
@@ -148,7 +149,8 @@
             const layer = element('g',{class:'hit-marker-layer'});
             hits.forEach(hit => {
               if (!hit.point) return;
-              layer.append(element('circle',{cx:hit.point.x,cy:hit.point.y,r:5,class:'hit-marker'}));
+              layer.append(element('circle',{cx:hit.point.x,cy:hit.point.y,r:8,class:'hit-marker-halo'}));
+              layer.append(element('circle',{cx:hit.point.x,cy:hit.point.y,r:5.5,class:'hit-marker'}));
             });
             svg.append(layer);
           });
