@@ -22,12 +22,11 @@
       .board-head p { margin:0; color:var(--muted); font-size:13px; }
       .text-button { appearance:none; border:0; padding:0; background:transparent; color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:4px; }
       .board-wrap { position:relative; width:min(100%,620px); margin:0 auto; aspect-ratio:1; overflow:hidden; border-radius:50%; background:#050505; touch-action:manipulation; }
-      .board-wrap.locked { opacity:.45; }
-      .board-wrap.locked::after { content:"6회 입력 완료"; position:absolute; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.58); color:#fff; font-size:16px; font-weight:800; letter-spacing:-.03em; pointer-events:none; }
       .dartboard { display:block; width:100%; height:100%; user-select:none; }
       .dartboard .segment { stroke:#141414; stroke-width:1.35; }
       .dartboard .wire { fill:none; stroke:#b6b1a7; stroke-opacity:.68; stroke-width:.8; pointer-events:none; }
-      .dartboard text { fill:#f1eee8; font-family:Arial,sans-serif; font-size:13px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:#1d1d1d; stroke-width:1.2px; }
+      .dartboard text { fill:#fff; font-family:Arial,sans-serif; font-size:14px; font-weight:800; text-anchor:middle; dominant-baseline:central; pointer-events:none; paint-order:stroke; stroke:#111; stroke-width:2px; }
+      .dartboard .hit-marker { fill:#ef2028; stroke:#fff; stroke-width:1.4px; pointer-events:none; }
       .guide { margin:13px 0 0; color:var(--muted); font-size:12px; line-height:1.5; text-align:center; }
       .score-panel { border-top:2px solid #fff; padding-top:16px; }
       .score-meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; font-weight:800; letter-spacing:.08em; }
@@ -120,10 +119,10 @@
             const start = -Math.PI/2 - Math.PI/20 + index*Math.PI/10, end = start + Math.PI/10, light = index % 2 === 0;
             const ring = (inner,outer,fill) => svg.append(element('path',{d:wedge(inner,outer,start,end),fill,class:'segment'}));
             ring(radii.tripleOut,radii.doubleIn,light ? '#ece8df' : '#252525');
-            ring(radii.doubleOut,131,index % 2 ? '#159782' : '#d83b45');
+            ring(radii.doubleIn,radii.doubleOut,index % 2 ? '#159782' : '#d83b45');
             ring(radii.tripleIn,radii.tripleOut,index % 2 ? '#159782' : '#d83b45');
             ring(radii.outerBull,radii.tripleIn,light ? '#ece8df' : '#252525');
-            const [x,y] = polar(146,(start+end)/2), text = element('text',{x,y}); text.textContent=number; svg.append(text);
+            const [x,y] = polar(141,(start+end)/2), text = element('text',{x,y}); text.textContent=number; svg.append(text);
           });
           [radii.doubleOut,radii.doubleIn,radii.tripleOut,radii.tripleIn,radii.outerBull].forEach(radius => svg.append(element('circle',{cx:center,cy:center,r:radius,class:'wire'})));
           svg.append(element('circle',{cx:center,cy:center,r:radii.outerBull,fill:'#159782',class:'segment'}));
@@ -143,6 +142,17 @@
           if (radius >= radii.tripleIn && radius <= radii.tripleOut) return {score:number*3,name:`트리플 ${number}`,short:`T${number}`};
           return {score:number,name:`싱글 ${number}`,short:`S${number}`};
         }
+        function renderMarkers() {
+          [$('#main-board'), $('#precision-board')].forEach(svg => {
+            svg.querySelector('.hit-marker-layer')?.remove();
+            const layer = element('g',{class:'hit-marker-layer'});
+            hits.forEach(hit => {
+              if (!hit.point) return;
+              layer.append(element('circle',{cx:hit.point.x,cy:hit.point.y,r:5,class:'hit-marker'}));
+            });
+            svg.append(layer);
+          });
+        }
         function record(hit) { if (hits.length >= MAX_THROWS) return; hits.push(hit); render(); }
         function render() {
           const total=hits.reduce((sum,hit)=>sum+hit.score,0), last=hits.at(-1), complete=hits.length===MAX_THROWS;
@@ -153,13 +163,15 @@
           $('#undo').disabled=!hits.length;
           $('#miss').disabled=complete;
           $('#board-wrap').classList.toggle('locked',complete);
+          $('#reset').textContent=complete ? '다시 시작' : '초기화';
           $('#history-list').innerHTML=Array.from({length:MAX_THROWS},(_,index) => {
             const hit=hits[index];
             return `<li class="throw-row ${hit?'used':''}"><span class="throw-no">${index+1}</span><span class="throw-name ${hit?'':'empty-value'}">${hit ? hit.name : '—'}</span><span class="throw-score">${hit ? hit.score+'점' : '—'}</span></li>`;
           }).join('');
+          renderMarkers();
         }
         function eventPoint(event,svg) { const rect=svg.getBoundingClientRect(), viewBox=svg.viewBox.baseVal; return {x:viewBox.x+(event.clientX-rect.left)/rect.width*viewBox.width,y:viewBox.y+(event.clientY-rect.top)/rect.height*viewBox.height}; }
-        function scoreFromBoard(event,svg) { const point=eventPoint(event,svg), hit=scoreAt(point.x,point.y); if (hit) record(hit); return Boolean(hit); }
+        function scoreFromBoard(event,svg) { const point=eventPoint(event,svg), hit=scoreAt(point.x,point.y); if (hit) record({...hit,point}); return Boolean(hit); }
         $('#main-board').addEventListener('pointerup',event => { if (event.pointerType==='mouse' && event.button!==0) return; scoreFromBoard(event,$('#main-board')); });
         $('#miss').addEventListener('click',()=>record({score:0,name:'미스',short:'MISS'}));
         $('#undo').addEventListener('click',()=>{ if(hits.length){ hits.pop(); render(); } });
