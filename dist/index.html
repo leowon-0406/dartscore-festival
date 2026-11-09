@@ -32,6 +32,11 @@
       .score-panel { border-top:2px solid #fff; padding-top:16px; }
       .score-meta { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; font-weight:800; letter-spacing:.08em; }
       .total { margin:4px 0 0; font-size:clamp(66px,9vw,96px); line-height:.94; letter-spacing:-.08em; font-variant-numeric:tabular-nums; }
+      .reward { display:none; margin-top:18px; padding:13px 14px; border:1px solid #fff; background:#fff; color:#000; }
+      .reward.visible { display:block; }
+      .reward-label { display:block; font-size:11px; font-weight:850; letter-spacing:.08em; }
+      .reward-value { display:block; margin-top:3px; font-size:28px; line-height:1.05; letter-spacing:-.05em; }
+      .reward-rule { display:block; margin-top:5px; color:#575757; font-size:12px; font-weight:700; }
       .last { min-height:46px; margin:17px 0 21px; padding:12px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center; gap:12px; font-size:13px; }
       .last-label { color:var(--muted); font-weight:700; }
       #last-hit { font-weight:800; text-align:right; }
@@ -83,6 +88,7 @@
           <section class="score-panel" aria-live="polite">
             <div class="score-meta"><span>합계</span><span id="turn-label">0 / 6</span></div>
             <div class="total" id="total">0</div>
+            <div class="reward" id="reward" aria-live="polite"><span class="reward-label">코인 결과</span><strong class="reward-value" id="reward-value"></strong><small class="reward-rule" id="reward-rule"></small></div>
             <div class="last"><span class="last-label">최근 기록</span><span id="last-hit">—</span></div>
             <button class="miss" id="miss" type="button">미스 기록 · 0점</button>
             <div class="utility"><button id="undo" type="button" disabled>이전</button><button id="reset" type="button">초기화</button></div>
@@ -161,8 +167,16 @@
           });
         }
         function record(hit) { if (hits.length >= MAX_THROWS) return; hits.push(hit); render(); }
+        function coinReward(total) {
+          if (total < 60) return { value:'코인 없음', rule:'60점 미만' };
+          if (total < 70) return { value:'코인 -1', rule:'60점 이상 · 70점 미만' };
+          if (total < 95) return { value:'코인 +1', rule:'70점 이상 · 95점 미만' };
+          if (total < 115) return { value:'코인 +2', rule:'95점 이상 · 115점 미만' };
+          return { value:'코인 x2', rule:'115점 이상' };
+        }
         function render() {
           const total=hits.reduce((sum,hit)=>sum+hit.score,0), last=hits.at(-1), complete=hits.length===MAX_THROWS;
+          const reward=coinReward(total);
           $('#total').textContent=total;
           $('#turn-label').textContent=`${hits.length} / ${MAX_THROWS}`;
           $('#throws').textContent=`${hits.length} / ${MAX_THROWS}`;
@@ -171,6 +185,9 @@
           $('#miss').disabled=complete;
           $('#board-wrap').classList.toggle('locked',complete);
           $('#restart').classList.toggle('visible',complete);
+          $('#reward').classList.toggle('visible',complete);
+          $('#reward-value').textContent=reward.value;
+          $('#reward-rule').textContent=reward.rule;
           $('#history-list').innerHTML=Array.from({length:MAX_THROWS},(_,index) => {
             const hit=hits[index];
             return `<li class="throw-row ${hit?'used':''}"><span class="throw-no">${index+1}</span><span class="throw-name ${hit?'':'empty-value'}">${hit ? hit.name : '—'}</span><span class="throw-score">${hit ? hit.score+'점' : '—'}</span></li>`;
